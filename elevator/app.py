@@ -8,8 +8,11 @@ from dependencies import get_session
 from elevator import Elevator
 
 from fastapi import Depends, HTTPException
+from fastapi.testclient import TestClient
 
 from http import HTTPStatus
+
+import pandas as pd
 
 from sqlalchemy.orm import Session
 
@@ -34,11 +37,11 @@ def get_root():
 
 @app.post('/elevator/{floor_id}', status_code = HTTPStatus.CREATED, response_model = ElevatorDemand)
 def call_elevator(floor_id: int, session: Session = Depends(get_session)):
-    if floor_id < app.first_floor or floor_id > app.penthouse_floor:
+    if floor_id < app.first_floor or floor_id > app.penthouse_floor: 
         raise HTTPException(
             status_code = HTTPStatus.BAD_REQUEST, detail = "Invalid floor number."
         )
-
+    print(f"Calling elevator to floor {floor_id}.")
     elevator_demand = create_demand_registry(
         session,
         ElevatorDemand(
@@ -84,3 +87,25 @@ def get_elevator_demand(demand_id: int, session: Session = Depends(get_session))
         )
 
     return demand
+
+if __name__ == '__main__':
+    
+    client = TestClient(app)
+
+    floor_list = [-1, 1, 2, 4, 5, 6, 12, 8, 9, 10]
+
+    for floor in floor_list:
+        response = client.post(f'/elevator/{floor}').json()
+
+        print(response)
+
+    all_entries_json = client.get('/elevator/demands').json()
+    
+    response = client.delete('/elevator/2').json()
+    print(response['message'])
+
+    df = pd.json_normalize(all_entries_json['demands'])
+
+    df.to_csv('results/elevator_demands.csv', index = False)
+
+    models.Base.metadata.drop_all(bind = engine)    
