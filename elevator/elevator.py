@@ -1,11 +1,15 @@
-from fastapi import APIRouter
+from fastapi import FastAPI
 
-class ElevatorRouter(APIRouter):
-    def __init__(self, id, first_garage_floor, penthouse_floor):
+class Elevator(FastAPI):
+    def __init__(self, id, first_floor, penthouse_floor):
         super().__init__()
 
         self.current_floor = 0
-        self.database = []
+        self.status = 'idle'
         self.id = id
-        self.first_garage_floor = first_garage_floor
+        self.first_floor = first_floor
         self.penthouse_floor = penthouse_floor
+
+
+    def update_current_elevator_status(self, status):
+        self.status = status
