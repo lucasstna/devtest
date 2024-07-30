@@ -22,7 +22,7 @@ models.Base.metadata.create_all(bind = engine)
 
 app = Elevator(
     id = 1,
-    first_floor = -1,
+    first_floor = 0,
     penthouse_floor = 10
 )
 
