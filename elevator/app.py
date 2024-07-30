@@ -1,12 +1,15 @@
+
+from database import models
+from database.database import SessionLocal, engine
+from database.schemas import ElevatorDemand, Message, Demands
+
+from dependencies import get_session
+
 from elevator import Elevator
 
 from fastapi import Depends, HTTPException
 
 from http import HTTPStatus
-
-from database import models
-from database.database import SessionLocal, engine
-from database.schemas import ElevatorDemand, Message, Demands
 
 from sqlalchemy.orm import Session
 
@@ -22,13 +25,6 @@ app = Elevator(
     first_floor = -1,
     penthouse_floor = 10
 )
-
-def get_session():
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
 
 
 @app.get("/", status_code = HTTPStatus.OK, response_model = Message)
@@ -74,6 +70,17 @@ def delete_elevator_demand(demand_id: int, session: Session = Depends(get_sessio
 
 
 @app.get('/elevator/demands', status_code = HTTPStatus.OK, response_model = Demands)
-def get_elevator_demand(session: Session = Depends(get_session)):
-    
+def get_all_elevator_demands(session: Session = Depends(get_session)):
     return {'demands' : get_demands(session)}
+
+
+@app.get('/elevator/{demand_id}', status_code = HTTPStatus.OK, response_model = ElevatorDemand)
+def get_elevator_demand(demand_id: int, session: Session = Depends(get_session)):
+    demand = get_elevator_demand_by_id(session, demand_id)
+
+    if not demand:
+        raise HTTPException(
+            status_code = HTTPStatus.NOT_FOUND, detail = "Elevator demand not found."
+        )
+
+    return demand
